@@ -1,6 +1,7 @@
-import pygame
-import sys
 import os
+import sys
+
+import pygame
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from game.constants import *

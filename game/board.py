@@ -1,6 +1,8 @@
 import numpy as np
+
 from game.constants import *
 from game.piece import Piece
+
 
 class Board:
     def __init__(self):
