@@ -11,14 +11,12 @@ class GameController:
         self.game_over = False
         self.winner = None
 
-        # Compteurs de pièces
         self.piece_count = {
             WHITE: 20,
             BLACK: 20
         }
 
     def reset(self):
-        """Réinitialise le jeu"""
         self.board.reset()
         self.current_player = WHITE
         self.selected_piece = None
@@ -29,7 +27,6 @@ class GameController:
         self.piece_count = {WHITE: 20, BLACK: 20}
 
     def select(self, row, col):
-        """Sélectionne une pièce à la position donnée"""
         if self.selected_piece == (row, col):
             self.selected_piece = None
             self.valid_moves = {}
@@ -44,25 +41,27 @@ class GameController:
         return False
 
     def move(self, row, col):
-        """Déplace la pièce sélectionnée vers la position donnée"""
         if self.selected_piece and (row, col) in self.valid_moves:
             from_row, from_col = self.selected_piece
+            piece = self.board.get_piece(from_row, from_col)
+            piece_type = piece.type if piece else None
 
-            # Si c'est une capture, on retire les pièces capturées
             captured = self.valid_moves[(row, col)]
             if captured:
                 for capt_row, capt_col in captured:
                     self.board.remove_piece(capt_row, capt_col)
                     self.piece_count[BLACK if self.current_player == WHITE else WHITE] -= 1
 
-            # Déplacement de la pièce
             self.board.move_piece(from_row, from_col, row, col)
 
-            # Réinitialisation de la sélection
+            piece = self.board.get_piece(row, col)
+            if piece and piece.type == PION:
+                if (piece.color == WHITE and row == 0) or (piece.color == BLACK and row == BOARD_SIZE-1):
+                    piece.type = DAME
+
             self.selected_piece = None
             self.valid_moves = {}
 
-            # Vérification de la fin de partie
             if self.piece_count[BLACK] == 0:
                 self.game_over = True
                 self.winner = WHITE
@@ -70,7 +69,6 @@ class GameController:
                 self.game_over = True
                 self.winner = BLACK
 
-            # Changement de joueur
             self.current_player = BLACK if self.current_player == WHITE else WHITE
 
             return True
@@ -78,7 +76,6 @@ class GameController:
         return False
 
     def get_game_state(self):
-        """Récupère l'état actuel du jeu"""
         return {
             'current_player': self.current_player,
             'white_pieces': self.piece_count[WHITE],

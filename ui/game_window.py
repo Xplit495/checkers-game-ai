@@ -29,11 +29,9 @@ class GameWindow:
                 self.running = False
 
             elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                # Gérer le clic gauche de la souris
                 self.board_view.handle_click(event.pos)
                 self.needs_redraw = True
 
-            # Touche "r" pour réinitialiser le jeu
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
                 self.board_view.game_controller.reset()
                 self.needs_redraw = True
