@@ -26,14 +26,33 @@ class GameController:
         self.winner = None
         self.piece_count = {WHITE: 20, BLACK: 20}
 
+    def check_captures_available(self):
+        for row in range(BOARD_SIZE):
+            for col in range(BOARD_SIZE):
+                piece = self.board.get_piece(row, col)
+                if piece and piece.color == self.current_player:
+                    captures = self.board._get_captures(row, col)
+                    if captures:
+                        return True
+        return False
+
+    def can_piece_capture(self, row, col):
+        captures = self.board._get_captures(row, col)
+        return bool(captures)
+
     def select(self, row, col):
         if self.selected_piece == (row, col):
             self.selected_piece = None
             self.valid_moves = {}
             return False
 
+        self.captures_available = self.check_captures_available()
+
         piece = self.board.get_piece(row, col)
         if piece and piece.color == self.current_player:
+            if self.captures_available and not self.can_piece_capture(row, col):
+                return False
+
             self.selected_piece = (row, col)
             self.valid_moves = self.board.get_valid_moves(row, col, self.current_player)
             return True
