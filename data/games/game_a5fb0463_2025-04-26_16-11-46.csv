@@ -1,0 +1,1 @@
+game_id,move_number,player,from_row,from_col,to_row,to_col,piece_type,captures,promotion,classification,move_score,outcome_contribution,timestamp

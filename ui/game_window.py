@@ -72,6 +72,10 @@ class GameWindow:
         self.ai_move_delay = 500
 
     def new_game(self):
+        if hasattr(self.board_view.game_controller, 'game_recorder') and self.board_view.game_controller.game_recorder:
+            winner = self.board_view.game_controller.winner
+            self.board_view.game_controller.game_recorder.end_game(winner)
+
         self.board_view.game_controller.reset()
         self.active_player = WHITE
         self.needs_redraw = True
@@ -92,6 +96,9 @@ class GameWindow:
             print(f"Statistiques générées dans {stats_files}")
 
     def quit_game(self):
+        if hasattr(self.board_view.game_controller, 'game_recorder') and self.board_view.game_controller.game_recorder:
+            self.board_view.game_controller.game_recorder.end_game(None)
+
         self.running = False
 
     def handle_events(self):
@@ -184,8 +191,8 @@ class GameWindow:
 
             pygame.time.wait(30)
 
-        if hasattr(self.board_view.game_controller, 'game_recorder'):
-            self.board_view.game_controller.game_recorder.save_moves()
+        if hasattr(self.board_view.game_controller, 'game_recorder') and self.board_view.game_controller.game_recorder:
+            self.board_view.game_controller.game_recorder.end_game(self.board_view.game_controller.winner)
 
         pygame.quit()
         sys.exit()

@@ -27,7 +27,7 @@ class GameController:
             if self.game_over:
                 self.game_recorder.end_game(self.winner)
             else:
-                self.game_recorder.save_moves()
+                self.game_recorder.end_game(None)
 
         self.board.reset()
         self.current_player = WHITE
@@ -102,6 +102,29 @@ class GameController:
 
         return classification
 
+    def _calculate_move_score(self, piece_type, captures, promotion, to_pos):
+        score = 0
+
+        base_score = 5 if piece_type == PION else 7
+
+        if captures:
+            capture_score = len(captures) * 10
+            score += capture_score
+
+        if promotion:
+            score += 15
+
+        to_row, to_col = to_pos
+        center_distance = abs(to_row - BOARD_SIZE//2) + abs(to_col - BOARD_SIZE//2)
+        center_score = max(0, (BOARD_SIZE - center_distance) * 0.5)
+        score += center_score
+
+        if piece_type == DAME:
+            if to_row == 0 or to_row == BOARD_SIZE-1 or to_col == 0 or to_col == BOARD_SIZE-1:
+                score += 5
+
+        return base_score + score
+
     def move(self, row, col):
         if self.selected_piece and (row, col) in self.valid_moves:
             from_row, from_col = self.selected_piece
@@ -130,6 +153,8 @@ class GameController:
             if hasattr(self, 'game_recorder') and self.game_recorder:
                 move_classification = self._classify_move(from_pos, to_pos, piece_type, captured, was_promoted)
 
+                move_score = self._calculate_move_score(piece_type, captured, was_promoted, to_pos)
+
                 self.game_recorder.record_move(
                     player=self.current_player,
                     from_pos=from_pos,
@@ -137,7 +162,8 @@ class GameController:
                     piece_type=piece_type,
                     captures=captured,
                     promotion=was_promoted,
-                    classification=move_classification
+                    classification=move_classification,
+                    move_score=move_score
                 )
 
                 self.game_recorder.save_moves()

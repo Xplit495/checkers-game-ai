@@ -31,8 +31,19 @@ class StatsGenerator:
         try:
             history = self.data_processor.load_game_history()
 
-            if history.empty:
-                return None
+            if history.empty or 'winner' not in history.columns:
+                print("Attention: Pas assez de données d'historique pour générer des statistiques de victoire.")
+                plt.figure(figsize=(10, 6))
+                plt.text(0.5, 0.5, "Pas assez de données - Jouez plus de parties complètes",
+                        ha='center', va='center', fontsize=16)
+                plt.axis('off')
+
+                output_file = os.path.join(self.output_dir, "win_rate.png")
+                plt.tight_layout()
+                plt.savefig(output_file)
+                plt.close()
+
+                return output_file
 
             win_counts = history['winner'].value_counts()
 

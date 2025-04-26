@@ -38,11 +38,26 @@ class GameRecorder:
                 'captures',
                 'promotion',
                 'classification',
+                'move_score',
+                'outcome_contribution',
                 'timestamp'
             ])
         print(f"Created game record file: {self.filename}")
 
-    def record_move(self, player, from_pos, to_pos, piece_type, captures=None, promotion=False, classification="normal"):
+    def record_move(self, player, from_pos, to_pos, piece_type, captures=None, promotion=False, classification="normal", move_score=0):
+        """
+        Enregistre un coup joué.
+
+        Args:
+            player (str): WHITE ou BLACK
+            from_pos (tuple): Position de départ (row, col)
+            to_pos (tuple): Position d'arrivée (row, col)
+            piece_type (str): Type de pièce (PION ou DAME)
+            captures (list): Liste des positions capturées [(row, col), ...]
+            promotion (bool): Si la pièce a été promue en dame
+            classification (str): Classification du coup pour l'IA
+            move_score (float): Score évalué pour ce coup
+        """
         self.move_count += 1
 
         from_row, from_col = from_pos
@@ -77,12 +92,14 @@ class GameRecorder:
             captures_str,
             promotion,
             classification,
+            move_score,
+            "pending",
             datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         ]
 
         self.moves.append(move_entry)
 
-        print(f"Recorded move: {player} from ({from_row},{from_col}) to ({to_row},{to_col})")
+        print(f"Recorded move: {player} from ({from_row},{from_col}) to ({to_row},{to_col}) with score {move_score}")
 
         if self.auto_save and self.move_count % self.save_interval == 0:
             self.save_moves()
@@ -106,8 +123,40 @@ class GameRecorder:
         except Exception as e:
             print(f"Error saving moves: {e}")
 
+    def _update_outcome_contributions(self, winner):
+        try:
+            all_moves = []
+            with open(self.filename, 'r', newline='') as file:
+                reader = csv.reader(file)
+                headers = next(reader)
+                outcome_index = headers.index('outcome_contribution')
+                player_index = headers.index('player')
+
+                for row in reader:
+                    player = row[player_index]
+                    if winner:
+                        if player == winner:
+                            row[outcome_index] = "positive"
+                        else:
+                            row[outcome_index] = "negative"
+                    else:
+                        row[outcome_index] = "neutral"
+
+                    all_moves.append(row)
+
+            with open(self.filename, 'w', newline='') as file:
+                writer = csv.writer(file)
+                writer.writerow(headers)
+                writer.writerows(all_moves)
+
+            print(f"Updated outcome contributions for game {self.game_id}")
+        except Exception as e:
+            print(f"Error updating outcome contributions: {e}")
+
     def end_game(self, winner):
         self.save_moves()
+
+        self._update_outcome_contributions(winner)
 
         results_file = os.path.join(self.data_dir, "games_history.csv")
 
@@ -144,14 +193,24 @@ class GameRecorder:
 
     @staticmethod
     def load_game(filename):
+        """
+        Charge une partie enregistrée à partir d'un fichier CSV.
+
+        Args:
+            filename (str): Chemin vers le fichier CSV
+
+        Returns:
+            list: Liste des coups de la partie
+        """
         moves = []
         try:
             with open(filename, 'r', newline='') as file:
                 reader = csv.reader(file)
-                next(reader)
+                headers = next(reader)
+
                 for row in reader:
-                    if len(row) >= 11:
-                        moves.append({
+                    if len(row) >= 12:
+                        move_data = {
                             'game_id': row[0],
                             'move_number': int(row[1]),
                             'player': row[2],
@@ -162,8 +221,11 @@ class GameRecorder:
                                         [pos.split(',') for pos in row[8].split(';')]] if row[8] else [],
                             'promotion': row[9].lower() == 'true',
                             'classification': row[10],
-                            'timestamp': row[11] if len(row) > 11 else None
-                        })
+                            'move_score': float(row[11]) if row[11] and row[11] != 'pending' else 0,
+                            'outcome_contribution': row[12] if len(row) > 12 else 'pending',
+                            'timestamp': row[13] if len(row) > 13 else None
+                        }
+                        moves.append(move_data)
                     else:
                         print(f"Warning: Invalid row format: {row}")
             return moves
