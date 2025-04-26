@@ -22,6 +22,7 @@ class BoardView:
         self.square_size = board_size_px // BOARD_SIZE
 
         self.font = pygame.font.SysFont('Arial', 24)
+        self.small_font = pygame.font.SysFont('Arial', 18)
 
         from ui.piece_view import PieceView
         self.piece_view = PieceView(self.square_size)
@@ -44,6 +45,13 @@ class BoardView:
                      self.square_size, self.square_size)
                 )
 
+        for i in range(BOARD_SIZE):
+            text = self.small_font.render(str(i), True, (0, 0, 0))
+            self.window.blit(text, (5, i * self.square_size + self.square_size//2 - 8))
+
+            text = self.small_font.render(chr(97 + i), True, (0, 0, 0))
+            self.window.blit(text, (i * self.square_size + self.square_size//2 - 5, self.board_size_px - 20))
+
     def draw_info_panel(self):
         info_panel_rect = pygame.Rect(
             self.board_size_px, 0,
@@ -62,6 +70,11 @@ class BoardView:
         black_text = f"Pièces noires: {self.game_state['black_pieces']}"
         black_surface = self.font.render(black_text, True, self.TEXT_COLOR)
         self.window.blit(black_surface, (self.board_size_px + 20, 150))
+
+        if hasattr(self.game_controller, 'captures_available') and self.game_controller.captures_available:
+            captures_text = "Captures disponibles!"
+            captures_surface = self.font.render(captures_text, True, (255, 150, 0))
+            self.window.blit(captures_surface, (self.board_size_px + 20, 200))
 
         if self.game_state['game_over']:
             game_over_text = f"Partie terminée! Vainqueur: {'Blanc' if self.game_state['winner'] == WHITE else 'Noir'}"
@@ -100,15 +113,20 @@ class BoardView:
         x, y = pos
 
         if x >= self.board_size_px:
-            return
+            return False
 
         col = x // self.square_size
         row = y // self.square_size
 
+        move_made = False
+
         if self.game_state['selected']:
             if (row, col) in self.game_state['valid_moves']:
                 self.game_controller.move(row, col)
+                move_made = True
             else:
                 self.game_controller.select(row, col)
         else:
             self.game_controller.select(row, col)
+
+        return move_made

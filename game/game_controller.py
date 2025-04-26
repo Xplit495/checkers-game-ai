@@ -1,8 +1,9 @@
 from game.board import Board
 from game.constants import *
+from data_management.game_recorder import GameRecorder
 
 class GameController:
-    def __init__(self):
+    def __init__(self, create_recorder=True):
         self.board = Board()
         self.current_player = WHITE
         self.selected_piece = None
@@ -16,7 +17,18 @@ class GameController:
             BLACK: 20
         }
 
+        if create_recorder:
+            self.game_recorder = GameRecorder(auto_save=True, save_interval=3)
+        else:
+            self.game_recorder = None
+
     def reset(self):
+        if hasattr(self, 'game_recorder') and self.game_recorder:
+            if self.game_over:
+                self.game_recorder.end_game(self.winner)
+            else:
+                self.game_recorder.save_moves()
+
         self.board.reset()
         self.current_player = WHITE
         self.selected_piece = None
@@ -25,6 +37,8 @@ class GameController:
         self.game_over = False
         self.winner = None
         self.piece_count = {WHITE: 20, BLACK: 20}
+
+        self.game_recorder = GameRecorder(auto_save=True, save_interval=3)
 
     def check_captures_available(self):
         for row in range(BOARD_SIZE):
@@ -59,13 +73,47 @@ class GameController:
 
         return False
 
+    def _classify_move(self, from_pos, to_pos, piece_type, captures, promotion):
+        move_count = self.game_recorder.move_count if hasattr(self, 'game_recorder') and self.game_recorder else 0
+        total_pieces = self.piece_count[WHITE] + self.piece_count[BLACK]
+
+        if move_count < 8:
+            classification = "opening"
+        elif total_pieces < 15:
+            classification = "end_game"
+        else:
+            classification = "middle_game"
+
+        if captures:
+            if len(captures) > 1:
+                classification = "multiple_capture"
+            else:
+                classification = "capture"
+
+        if promotion:
+            if captures:
+                classification = "capture_promotion"
+            else:
+                classification = "promotion"
+
+        if piece_type == DAME:
+            if "capture" in classification:
+                classification = "king_" + classification
+
+        return classification
+
     def move(self, row, col):
         if self.selected_piece and (row, col) in self.valid_moves:
             from_row, from_col = self.selected_piece
+            from_pos = (from_row, from_col)
+            to_pos = (row, col)
+
             piece = self.board.get_piece(from_row, from_col)
             piece_type = piece.type if piece else None
 
             captured = self.valid_moves[(row, col)]
+            was_promoted = False
+
             if captured:
                 for capt_row, capt_col in captured:
                     self.board.remove_piece(capt_row, capt_col)
@@ -77,6 +125,22 @@ class GameController:
             if piece and piece.type == PION:
                 if (piece.color == WHITE and row == 0) or (piece.color == BLACK and row == BOARD_SIZE-1):
                     piece.type = DAME
+                    was_promoted = True
+
+            if hasattr(self, 'game_recorder') and self.game_recorder:
+                move_classification = self._classify_move(from_pos, to_pos, piece_type, captured, was_promoted)
+
+                self.game_recorder.record_move(
+                    player=self.current_player,
+                    from_pos=from_pos,
+                    to_pos=to_pos,
+                    piece_type=piece_type,
+                    captures=captured,
+                    promotion=was_promoted,
+                    classification=move_classification
+                )
+
+                self.game_recorder.save_moves()
 
             self.selected_piece = None
             self.valid_moves = {}
@@ -84,9 +148,13 @@ class GameController:
             if self.piece_count[BLACK] == 0:
                 self.game_over = True
                 self.winner = WHITE
+                if hasattr(self, 'game_recorder') and self.game_recorder:
+                    self.game_recorder.end_game(self.winner)
             elif self.piece_count[WHITE] == 0:
                 self.game_over = True
                 self.winner = BLACK
+                if hasattr(self, 'game_recorder') and self.game_recorder:
+                    self.game_recorder.end_game(self.winner)
 
             self.current_player = BLACK if self.current_player == WHITE else WHITE
 
