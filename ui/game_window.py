@@ -1,6 +1,6 @@
 import os
 import sys
-import time
+
 import pygame
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -10,6 +10,15 @@ from players.human_player import HumanPlayer
 from players.ai_player import AIPlayer
 from game.constants import *
 from visualization.stats_generator import StatsGenerator
+
+
+def generate_stats():
+    stats_generator = StatsGenerator()
+    stats_files = stats_generator.generate_all_stats()
+
+    if stats_files:
+        print(f"Statistiques générées dans {stats_files}")
+
 
 class GameWindow:
     BOARD_SIZE_PX = 800
@@ -42,7 +51,7 @@ class GameWindow:
 
         button_width = 200
         button_height = 40
-        button_margin = 10
+
         button_x = self.BOARD_SIZE_PX + (self.INFO_PANEL_WIDTH - button_width) // 2
 
         self.buttons = [
@@ -59,7 +68,7 @@ class GameWindow:
             {
                 'rect': pygame.Rect(button_x, self.WINDOW_HEIGHT - 100, button_width, button_height),
                 'text': 'Générer Statistiques',
-                'action': self.generate_stats
+                'action': generate_stats
             },
             {
                 'rect': pygame.Rect(button_x, self.WINDOW_HEIGHT - 50, button_width, button_height),
@@ -87,13 +96,6 @@ class GameWindow:
             self.game_mode = "human_vs_human"
 
         self.new_game()
-
-    def generate_stats(self):
-        stats_generator = StatsGenerator()
-        stats_files = stats_generator.generate_all_stats()
-
-        if stats_files:
-            print(f"Statistiques générées dans {stats_files}")
 
     def quit_game(self):
         if hasattr(self.board_view.game_controller, 'game_recorder') and self.board_view.game_controller.game_recorder:

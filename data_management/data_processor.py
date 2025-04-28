@@ -1,9 +1,78 @@
-import os
 import csv
-import pandas as pd
+import os
+
 import numpy as np
-from game.constants import *
+import pandas as pd
+
 from game.board import Board
+from game.constants import *
+
+
+def _extract_board_features(board):
+    features = []
+
+    piece_map = np.zeros((BOARD_SIZE, BOARD_SIZE))
+
+    for row in range(BOARD_SIZE):
+        for col in range(BOARD_SIZE):
+            piece = board.get_piece(row, col)
+            if piece:
+                value = 1 if piece.color == WHITE else -1
+                if piece.type == DAME:
+                    value *= 2
+                piece_map[row, col] = value
+
+    features.extend(piece_map.flatten())
+
+    white_pawns = 0
+    white_kings = 0
+    black_pawns = 0
+    black_kings = 0
+
+    for row in range(BOARD_SIZE):
+        for col in range(BOARD_SIZE):
+            piece = board.get_piece(row, col)
+            if piece:
+                if piece.color == WHITE:
+                    if piece.type == PION:
+                        white_pawns += 1
+                    else:
+                        white_kings += 1
+                else:
+                    if piece.type == PION:
+                        black_pawns += 1
+                    else:
+                        black_kings += 1
+
+    features.extend([white_pawns, white_kings, black_pawns, black_kings])
+
+    white_in_danger = 0
+    black_in_danger = 0
+
+    for row in range(BOARD_SIZE):
+        for col in range(BOARD_SIZE):
+            piece = board.get_piece(row, col)
+            if not piece:
+                continue
+
+            opponent_color = BLACK if piece.color == WHITE else WHITE
+            for opp_row in range(BOARD_SIZE):
+                for opp_col in range(BOARD_SIZE):
+                    opp_piece = board.get_piece(opp_row, opp_col)
+                    if opp_piece and opp_piece.color == opponent_color:
+                        captures = board._get_captures(opp_row, opp_col)
+                        for _, captured in captures.items():
+                            for capt_row, capt_col in captured:
+                                if (capt_row, capt_col) == (row, col):
+                                    if piece.color == WHITE:
+                                        white_in_danger += 1
+                                    else:
+                                        black_in_danger += 1
+
+    features.extend([white_in_danger, black_in_danger])
+
+    return features
+
 
 class DataProcessor:
     def __init__(self, data_dir=None):
@@ -95,7 +164,7 @@ class DataProcessor:
                     piece = board.get_piece(to_row, to_col)
                     if piece:
                         piece.type = DAME
-            except (ValueError, TypeError, KeyError) as e:
+            except (ValueError, TypeError, KeyError):
                 continue
 
         return board
@@ -129,7 +198,7 @@ class DataProcessor:
 
                     board_before = self.reconstruct_board_state(game_id, move_number - 1)
 
-                    board_features = self._extract_board_features(board_before)
+                    board_features = _extract_board_features(board_before)
 
                     label = (
                         int(move['from_row']),
@@ -144,71 +213,6 @@ class DataProcessor:
                     continue
 
         return np.array(features), np.array(labels)
-
-    def _extract_board_features(self, board):
-        features = []
-
-        piece_map = np.zeros((BOARD_SIZE, BOARD_SIZE))
-
-        for row in range(BOARD_SIZE):
-            for col in range(BOARD_SIZE):
-                piece = board.get_piece(row, col)
-                if piece:
-                    value = 1 if piece.color == WHITE else -1
-                    if piece.type == DAME:
-                        value *= 2
-                    piece_map[row, col] = value
-
-        features.extend(piece_map.flatten())
-
-        white_pawns = 0
-        white_kings = 0
-        black_pawns = 0
-        black_kings = 0
-
-        for row in range(BOARD_SIZE):
-            for col in range(BOARD_SIZE):
-                piece = board.get_piece(row, col)
-                if piece:
-                    if piece.color == WHITE:
-                        if piece.type == PION:
-                            white_pawns += 1
-                        else:
-                            white_kings += 1
-                    else:
-                        if piece.type == PION:
-                            black_pawns += 1
-                        else:
-                            black_kings += 1
-
-        features.extend([white_pawns, white_kings, black_pawns, black_kings])
-
-        white_in_danger = 0
-        black_in_danger = 0
-
-        for row in range(BOARD_SIZE):
-            for col in range(BOARD_SIZE):
-                piece = board.get_piece(row, col)
-                if not piece:
-                    continue
-
-                opponent_color = BLACK if piece.color == WHITE else WHITE
-                for opp_row in range(BOARD_SIZE):
-                    for opp_col in range(BOARD_SIZE):
-                        opp_piece = board.get_piece(opp_row, opp_col)
-                        if opp_piece and opp_piece.color == opponent_color:
-                            captures = board._get_captures(opp_row, opp_col)
-                            for _, captured in captures.items():
-                                for capt_row, capt_col in captured:
-                                    if (capt_row, capt_col) == (row, col):
-                                        if piece.color == WHITE:
-                                            white_in_danger += 1
-                                        else:
-                                            black_in_danger += 1
-
-        features.extend([white_in_danger, black_in_danger])
-
-        return features
 
     def get_win_rates(self):
         history = self.load_game_history()

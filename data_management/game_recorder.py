@@ -1,9 +1,8 @@
 import csv
 import os
-import time
 import uuid
 from datetime import datetime
-from game.constants import *
+
 
 class GameRecorder:
     def __init__(self, auto_save=True, save_interval=3):
@@ -45,19 +44,6 @@ class GameRecorder:
         print(f"Created game record file: {self.filename}")
 
     def record_move(self, player, from_pos, to_pos, piece_type, captures=None, promotion=False, classification="normal", move_score=0):
-        """
-        Enregistre un coup joué.
-
-        Args:
-            player (str): WHITE ou BLACK
-            from_pos (tuple): Position de départ (row, col)
-            to_pos (tuple): Position d'arrivée (row, col)
-            piece_type (str): Type de pièce (PION ou DAME)
-            captures (list): Liste des positions capturées [(row, col), ...]
-            promotion (bool): Si la pièce a été promue en dame
-            classification (str): Classification du coup pour l'IA
-            move_score (float): Score évalué pour ce coup
-        """
         self.move_count += 1
 
         from_row, from_col = from_pos
@@ -193,20 +179,11 @@ class GameRecorder:
 
     @staticmethod
     def load_game(filename):
-        """
-        Charge une partie enregistrée à partir d'un fichier CSV.
-
-        Args:
-            filename (str): Chemin vers le fichier CSV
-
-        Returns:
-            list: Liste des coups de la partie
-        """
         moves = []
         try:
             with open(filename, 'r', newline='') as file:
                 reader = csv.reader(file)
-                headers = next(reader)
+                next(reader)
 
                 for row in reader:
                     if len(row) >= 12:

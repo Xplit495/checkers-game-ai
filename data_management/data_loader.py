@@ -1,7 +1,24 @@
 import os
-import pandas as pd
+
 import numpy as np
+import pandas as pd
+
 from game.constants import *
+
+
+def load_performance_stats():
+    stats_file = os.path.join("data", "stats", "performance.csv")
+
+    if not os.path.exists(stats_file):
+        print(f"Fichier de statistiques introuvable: {stats_file}")
+        return pd.DataFrame()
+
+    try:
+        return pd.read_csv(stats_file)
+    except Exception as e:
+        print(f"Erreur lors du chargement des statistiques: {e}")
+        return pd.DataFrame()
+
 
 class DataLoader:
     def __init__(self, data_dir=None):
@@ -45,19 +62,6 @@ class DataLoader:
             return pd.read_csv(history_file)
         except Exception as e:
             print(f"Erreur lors du chargement de l'historique: {e}")
-            return pd.DataFrame()
-
-    def load_performance_stats(self):
-        stats_file = os.path.join("data", "stats", "performance.csv")
-
-        if not os.path.exists(stats_file):
-            print(f"Fichier de statistiques introuvable: {stats_file}")
-            return pd.DataFrame()
-
-        try:
-            return pd.read_csv(stats_file)
-        except Exception as e:
-            print(f"Erreur lors du chargement des statistiques: {e}")
             return pd.DataFrame()
 
     def get_move_matrix(self):

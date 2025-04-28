@@ -4,6 +4,10 @@ from game.constants import *
 from game.piece import Piece
 
 
+def is_valid_position(row, col):
+    return 0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE
+
+
 class Board:
     def __init__(self):
         self.reset()
@@ -21,20 +25,17 @@ class Board:
                 if (row + col) % 2 == 1:
                     self.board[row, col] = Piece(WHITE, PION)
 
-    def is_valid_position(self, row, col):
-        return 0 <= row < BOARD_SIZE and 0 <= col < BOARD_SIZE
-
     def get_piece(self, row, col):
-        if self.is_valid_position(row, col):
+        if is_valid_position(row, col):
             return self.board[row, col]
         return None
 
     def set_piece(self, row, col, piece):
-        if self.is_valid_position(row, col):
+        if is_valid_position(row, col):
             self.board[row, col] = piece
 
     def remove_piece(self, row, col):
-        if self.is_valid_position(row, col):
+        if is_valid_position(row, col):
             self.board[row, col] = 0
 
     def move_piece(self, from_row, from_col, to_row, to_col):
@@ -59,7 +60,7 @@ class Board:
 
                 for dir_row, dir_col in directions:
                     new_row, new_col = row + dir_row, col + dir_col
-                    if self.is_valid_position(new_row, new_col) and self.get_piece(new_row, new_col) == 0:
+                    if is_valid_position(new_row, new_col) and self.get_piece(new_row, new_col) == 0:
                         valid_moves[(new_row, new_col)] = []
             else:
                 directions = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
@@ -67,7 +68,7 @@ class Board:
                 for dir_row, dir_col in directions:
                     new_row, new_col = row + dir_row, col + dir_col
 
-                    while (self.is_valid_position(new_row, new_col) and
+                    while (is_valid_position(new_row, new_col) and
                            self.get_piece(new_row, new_col) == 0):
                         valid_moves[(new_row, new_col)] = []
                         new_row += dir_row
@@ -87,11 +88,11 @@ class Board:
 
             for dir_row, dir_col in directions:
                 new_row, new_col = row + dir_row, col + dir_col
-                if (self.is_valid_position(new_row, new_col) and
+                if (is_valid_position(new_row, new_col) and
                     self.get_piece(new_row, new_col) and
                     self.get_piece(new_row, new_col).color != piece.color):
                     jump_row, jump_col = new_row + dir_row, new_col + dir_col
-                    if (self.is_valid_position(jump_row, jump_col) and
+                    if (is_valid_position(jump_row, jump_col) and
                         self.get_piece(jump_row, jump_col) == 0):
                         captures[(jump_row, jump_col)] = [(new_row, new_col)]
 
@@ -110,7 +111,7 @@ class Board:
                 opponent_found = False
                 opponent_pos = None
 
-                while self.is_valid_position(r, c):
+                while is_valid_position(r, c):
                     current_piece = self.get_piece(r, c)
 
                     if current_piece == 0:
@@ -128,7 +129,7 @@ class Board:
                     break
 
                 if opponent_found:
-                    while self.is_valid_position(r, c):
+                    while is_valid_position(r, c):
                         if self.get_piece(r, c) == 0:
                             captures[(r, c)] = [opponent_pos]
 

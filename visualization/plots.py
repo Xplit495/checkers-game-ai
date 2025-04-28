@@ -1,9 +1,11 @@
-import matplotlib.pyplot as plt
-import pandas as pd
-import numpy as np
 import io
-import os
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
 from game.constants import *
+
 
 class PlotGenerator:
     @staticmethod
