@@ -1,7 +1,0 @@
-game_id,move_number,player,from_row,from_col,to_row,to_col,piece_type,captures,promotion,classification,move_score,outcome_contribution,timestamp
-51280844,1,white,6,5,5,4,pion,,False,opening,9.5,neutral,2025-04-26 16:12:04
-51280844,2,black,3,6,4,5,pion,,False,opening,9.5,neutral,2025-04-26 16:12:05
-51280844,3,white,5,4,3,6,pion,"4,5",False,capture,18.5,neutral,2025-04-26 16:12:08
-51280844,4,black,2,7,4,5,pion,"3,6",False,capture,19.5,neutral,2025-04-26 16:12:08
-51280844,5,white,6,7,5,8,pion,,False,opening,8.5,neutral,2025-04-26 16:12:10
-51280844,6,black,4,5,5,4,pion,,False,opening,9.5,neutral,2025-04-26 16:12:10

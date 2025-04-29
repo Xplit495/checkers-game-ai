@@ -43,7 +43,7 @@ class GameWindow:
         self.active_player = WHITE
 
         self.human_player = HumanPlayer(WHITE)
-        self.ai_player = AIPlayer(BLACK, difficulty="normal")
+        self.ai_player = AIPlayer(BLACK)  # Suppression du paramètre de difficulté
 
         self.board_view = BoardView(self.window, self.BOARD_SIZE_PX, self.INFO_PANEL_WIDTH)
 
